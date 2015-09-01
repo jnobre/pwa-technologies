@@ -68,10 +68,11 @@
                                         </div>
                                 </div>
 		</div>
+		<!--
 		<div id="main-home">
                                 <h3><fmt:message key='home.examples.title'/></h3>
                                 <h4><fmt:message key='home.examples.subtitle'/></h4>
-<!--  
+  
 				<fmt:bundle basename='pt.arquivo.i18n.Highlights'>
                                 <div class="boxes-home" id="boxes">
 					<%-- Let the box be clickable. Not just that one text --%>
