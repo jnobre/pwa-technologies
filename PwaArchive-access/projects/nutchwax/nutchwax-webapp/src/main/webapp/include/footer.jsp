@@ -5,7 +5,8 @@
    		<div class="links-content">
                 <p class="links-title"><fmt:message key="footer.section.about"/></p>
                 <ul>
-                    <li><fmt:message key="footer.section.about.objectives"/></li>
+                    <!-- 
+                     <li><fmt:message key="footer.section.about.objectives"/></li>-->
                     <li><fmt:message key="footer.section.about.publications"/></li>
                     <li><fmt:message key="footer.section.about.pages-examples"/></li>
                     <li><fmt:message key="footer.section.about.press"/></li>
@@ -19,8 +20,10 @@
                     <li><fmt:message key="footer.section.social.news"/></li>
                     
                     <li><fmt:message key="footer.section.social.twitter"/></li>
-                    <li><a href="http://www.facebook.com/pages/Arquivo-da-Web-Portuguesa/113463705350330"><fmt:message key="footer.section.social.facebook"/></a></li>
+                    <!-- 
                     <li><a href="http://arquivo.pt/rss"><fmt:message key='footer.section.social.rss'/></a></li>
+                     <li><a href="http://www.facebook.com/pages/Arquivo-da-Web-Portuguesa/113463705350330"><fmt:message key="footer.section.social.facebook"/></a></li>
+                     -->
                 </ul>
             </div>
 
@@ -30,8 +33,10 @@
                     <li><fmt:message key="footer.section.collaboration.suggest-website"/></li>
                     <li><fmt:message key="footer.section.collaboration.divulgation"/></li>
                     <li><fmt:message key="footer.section.collaboration.recommendations"/></li>
+                    <!-- 
                     <li><fmt:message key="footer.section.collaboration.giving"/></li>
                     <li><fmt:message key="footer.section.collaboration.projects"/></li>
+                     -->
                 </ul>
             </div>
 
@@ -40,9 +45,6 @@
                 <ul>
                     <li><fmt:message key='footer.section.help.search'/></li>
                     <li><fmt:message key='footer.section.help.advanced-search'/></li>
-                    <li><fmt:message key='footer.section.help.access'/></li>
-                    <li><fmt:message key='footer.section.help.crawl'/></li>
-                    <li><fmt:message key='footer.section.help.faq'/></li>
                     <li><fmt:message key='footer.section.help.contact'/></li>
                 </ul>
             </div>

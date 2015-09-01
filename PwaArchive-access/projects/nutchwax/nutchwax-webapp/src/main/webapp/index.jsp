@@ -43,7 +43,7 @@
 	<div class="wrap">
 		<div id="header-home">
                                 <div id="logo-home">
-                                        <img src="img/logo-home-<%=language%>.png" alt="<fmt:message key='header.logo.alt'/>" width="400" height="105" />
+                                        <img src="img/research_high.png" alt="<fmt:message key='header.logo.alt'/>" width="400" height="105" />
                                 </div>
                                 <div id="search-home">
                                         <form id="loginForm" action="search.jsp" name="loginForm" method="get">
@@ -71,7 +71,7 @@
 		<div id="main-home">
                                 <h3><fmt:message key='home.examples.title'/></h3>
                                 <h4><fmt:message key='home.examples.subtitle'/></h4>
-
+<!--  
 				<fmt:bundle basename='pt.arquivo.i18n.Highlights'>
                                 <div class="boxes-home" id="boxes">
 					<%-- Let the box be clickable. Not just that one text --%>
@@ -127,6 +127,7 @@
 					<a href="highlights.jsp?l=<%=language%>" title="<fmt:message key='home.highlights.link'/>" id="ver-destaques"><fmt:message key='home.highlights'/></a>
                                 </div>
                         </div>
+-->
 
 	</div> <!-- end of wrap -->
 <%@include file="include/footer.jsp" %>
