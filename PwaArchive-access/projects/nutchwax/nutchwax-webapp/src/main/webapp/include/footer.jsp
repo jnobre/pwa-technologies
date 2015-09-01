@@ -31,10 +31,10 @@
                 <p class="links-title"><fmt:message key="footer.section.collaboration"/></p>
                 <ul>
                     <li><fmt:message key="footer.section.collaboration.suggest-website"/></li>
-                    <li><fmt:message key="footer.section.collaboration.divulgation"/></li>
-                    <!-- 
-                    
                     <li><fmt:message key="footer.section.collaboration.recommendations"/></li>
+                    <!-- 
+                    <li><fmt:message key="footer.section.collaboration.divulgation"/></li>
+                    
                     <li><fmt:message key="footer.section.collaboration.giving"/></li>
                      -->
                     <li><fmt:message key="footer.section.collaboration.projects"/></li>
