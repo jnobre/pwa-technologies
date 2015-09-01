@@ -63,8 +63,8 @@
 						<%-- TODO: wrong H1. The title should be AWP. Merge H1 with logo for the intro page --%>
                                                 <h1><fmt:message key='home.title'/></h1>
                                                <!-- <h2><fmt:message key='home.subtitle'/></h2> -->
-                                                <p class="green"><fmt:message key='home.description'/></p>
-                                                <a href="http://sobre.arquivo.pt?set_language=<%=language%>" title="<fmt:message key='home.know-more.link'/>"><fmt:message key='home.know-more'/></a>
+                                              <!--    <p class="green"><fmt:message key='home.description'/></p>-->
+                                                <a href="http://sobre.arquivo.pt/news/Uma-primeira-tentativa-de-arquivar-o-.EU?set_language<%=language%>" title="<fmt:message key='home.know-more.link'/>"><fmt:message key='home.know-more'/></a>
                                         </div>
                                 </div>
 		</div>
