@@ -58,6 +58,6 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase time="0.045" classname="org.archive.wayback.resourceindex.distributed.AlphaPartitionedIndexTest" name="testFindRange"/>
-  <testcase time="0.012" classname="org.archive.wayback.resourceindex.distributed.AlphaPartitionedIndexTest" name="testGroupBalance"/>
+  <testcase time="0.046" classname="org.archive.wayback.resourceindex.distributed.AlphaPartitionedIndexTest" name="testFindRange"/>
+  <testcase time="0.011" classname="org.archive.wayback.resourceindex.distributed.AlphaPartitionedIndexTest" name="testGroupBalance"/>
 </testsuite>
