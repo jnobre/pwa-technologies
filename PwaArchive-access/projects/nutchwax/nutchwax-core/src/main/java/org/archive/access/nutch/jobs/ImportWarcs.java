@@ -1,5 +1,5 @@
 /*
- * $Id: ImportArcs.java 1521 2007-02-27 18:01:29Z stack-sf $
+ * $Id: ImportWarcs.java 1521 2018-03-00 
  * 
  * Copyright (C) 2003 Internet Archive.
  * 
@@ -128,9 +128,9 @@ import java.util.Map;
  * <li>cdx has a summary line for every record processed.</li>
  * </ul>
  */
-public class ImportArcs extends ToolBase implements WARCRecordMapper
+public class ImportWarcs extends ToolBase implements WARCRecordMapper
 {
-  public  final Log LOG = LogFactory.getLog(ImportArcs.class);
+  public  final Log LOG = LogFactory.getLog(ImportWarcs.class);
   private final NumberFormat numberFormatter = NumberFormat.getInstance();
 
   private static final String WHITESPACE = "\\s+";
@@ -191,21 +191,21 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
   
   
 
-  public ImportArcs()
+  public ImportWarcs()
   {
     super();
   }
 
-  public ImportArcs(Configuration conf)
+  public ImportWarcs(Configuration conf)
   {
     setConf(conf);
   }
 
-  public void importArcs(final Path arcUrlsDir, final Path segment,
+  public void importWarcs(final Path arcUrlsDir, final Path segment,
     final String collection)
     throws IOException
   {
-    LOG.info("ImportArcs segment: " + segment + ", src: " + arcUrlsDir);
+    LOG.info("ImportWarcs segment: " + segment + ", src: " + arcUrlsDir);
 
     final JobConf job = new JobConf(getConf(), this.getClass());
 
@@ -226,13 +226,13 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
     // Pass the collection name out to the tasks IF non-null.
     if ((collection != null) && (collection.length() > 0))
     {
-      job.set(ImportArcs.WAX_SUFFIX + ImportArcs.ARCCOLLECTION_KEY,
+      job.set(ImportWarcs.WAX_SUFFIX + ImportWarcs.ARCCOLLECTION_KEY,
         collection);
     }    
     job.setJobName("import " + arcUrlsDir + " " + segment);
 
     JobClient.runJob(job);
-    LOG.info("ImportArcs: done");
+    LOG.info("ImportWarcs: done");
   }
 
   public void configure(final JobConf job)
@@ -264,7 +264,7 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
 
     this.parseUtil = new ParseUtil(job);
 
-    this.collectionName = job.get(ImportArcs.WAX_SUFFIX + ImportArcs.ARCCOLLECTION_KEY);
+    this.collectionName = job.get(ImportWarcs.WAX_SUFFIX + ImportWarcs.ARCCOLLECTION_KEY);
 
     // Get ARCName by reading first record in ARC?  Otherwise, we parse
     // the name of the file we've been passed to find an ARC name.
@@ -273,7 +273,7 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
     this.collectionType = job.get(Global.COLLECTION_TYPE);
     this.timeoutIndexingDocument = job.getInt(Global.TIMEOUT_INDEXING_DOCUMENT, -1);   
     
-    LOG.info("ImportArcs collectionType: " + collectionType);
+    LOG.info("ImportWarcs collectionType: " + collectionType);
   }
 
   public Configuration getConf()
@@ -359,7 +359,7 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
           // from the http header. I've seen arc record lines with empty
           // content-type and a MIME unparseable file ending; i.e. .MID.
           if ((currentHeaderKey != null) &&
-            currentHeaderKey.toLowerCase().equals(ImportArcs.CONTENT_TYPE_KEY))
+            currentHeaderKey.toLowerCase().equals(ImportWarcs.CONTENT_TYPE_KEY))
           {
             mimetype = getMimetype(currentHeaderValue, null, null);           
             if (skip(mimetype))
@@ -383,7 +383,7 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
         // from the http header. I've seen arc record lines with empty
         // content-type and a MIME unparseable file ending; i.e. .MID.
         if ((header.getName() != null) &&
-          header.getName().toLowerCase().equals(ImportArcs.CONTENT_TYPE_KEY))
+          header.getName().toLowerCase().equals(ImportWarcs.CONTENT_TYPE_KEY))
         {
           mimetype = getMimetype(header.getValue(), null, null);
           
@@ -401,7 +401,7 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
     // status and telling the task tracker we're still alive (so it doesn't
     // time us out).
     final String noSpacesMimetype =
-      TextUtils.replaceAll(ImportArcs.WHITESPACE,
+      TextUtils.replaceAll(ImportWarcs.WHITESPACE,
       ((mimetype == null || mimetype.length() <= 0)?
       "TODO": mimetype),
       "-");
@@ -435,11 +435,11 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
       mimetype = mt.getName();
     }
     
-    metaData.set(ImportArcs.CONTENT_TYPE_KEY, mimetype);
+    metaData.set(ImportWarcs.CONTENT_TYPE_KEY, mimetype);
 
     // How much do we read total? If pdf, we will read more. If equal to -1,
     // read all.
-    int readLimit = (ImportArcs.PDF_TYPE.equals(mimetype))?
+    int readLimit = (ImportWarcs.PDF_TYPE.equals(mimetype))?
       this.pdfContentLimit : this.contentLimit;
     
     // Reset our contentBuffer so can reuse.  Over the life of an ARC
@@ -491,13 +491,13 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
     }
             
     if (collectionType.equals(Global.COLLECTION_TYPE_MULTIPLE)) {
-    	mw.put(new Text(ImportArcs.ARCCOLLECTION_KEY), new Text(SqlSearcher.getCollectionNameWithTimestamp(collectionName,warcData.getDate()))); 	
+    	mw.put(new Text(ImportWarcs.ARCCOLLECTION_KEY), new Text(SqlSearcher.getCollectionNameWithTimestamp(collectionName,warcData.getDate()))); 	
     }
     else {
-    	mw.put(new Text(ImportArcs.ARCCOLLECTION_KEY), new Text(collectionName));
+    	mw.put(new Text(ImportWarcs.ARCCOLLECTION_KEY), new Text(collectionName));
     }    
-    mw.put(new Text(ImportArcs.ARCFILENAME_KEY), new Text(arcName));
-    mw.put(new Text(ImportArcs.ARCFILEOFFSET_KEY),
+    mw.put(new Text(ImportWarcs.ARCFILENAME_KEY), new Text(arcName));
+    mw.put(new Text(ImportWarcs.ARCFILEOFFSET_KEY),
       new Text(Long.toString(warcData.getOffset())));
     datum.setMetaData(mw);
           
@@ -683,8 +683,8 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
     if (!this.indexAll)
     {
       if ((mimetype == null)
-        || (!mimetype.startsWith(ImportArcs.TEXT_TYPE) && !mimetype
-        .startsWith(ImportArcs.APPLICATION_TYPE)))
+        || (!mimetype.startsWith(ImportWarcs.TEXT_TYPE) && !mimetype
+        .startsWith(ImportWarcs.APPLICATION_TYPE)))
       {
         // Skip any but basic types.
         decision = true;
@@ -777,14 +777,14 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
         {       	        
           FetcherOutput fo = (FetcherOutput)value;
           MapWritable mw = fo.getCrawlDatum().getMetaData();
-          Text cdxLine = (Text)mw.get(ImportArcs.CDXKEY);
+          Text cdxLine = (Text)mw.get(ImportWarcs.CDXKEY);
           
           if (cdxLine != null)
           {
             cdxOut.append(key, cdxLine);
           }
           
-          mw.remove(ImportArcs.CDXKEY);
+          mw.remove(ImportWarcs.CDXKEY);
           fetchOut.append(key, fo.getCrawlDatum());
           
           if (fo.getParse() != null)
@@ -1071,7 +1071,7 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
 
   public static void main(String[] args) throws Exception
   {	  
-    int res = new ImportArcs().
+    int res = new ImportWarcs().
       doMain(NutchwaxConfiguration.getConfiguration(), args);
     
     System.exit(res);
@@ -1087,12 +1087,12 @@ public class ImportArcs extends ToolBase implements WARCRecordMapper
     // Assume list of ARC urls is first arg and output dir the second.
     try
     {
-      importArcs(new Path(args[0]), new Path(args[1]), args[2]);
+      importWarcs(new Path(args[0]), new Path(args[1]), args[2]);
       return 0;
     }
     catch(Exception e)
     {
-      LOG.fatal("ImportARCs: " + StringUtils.stringifyException(e));
+      LOG.fatal("ImportWARCs: " + StringUtils.stringifyException(e));
       
       return -1;
     }
