@@ -206,7 +206,8 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
     throws IOException
   {
     LOG.info("ImportWarcs segment: " + segment + ", src: " + arcUrlsDir);
-
+    System.out.println( "ImportWarcs segment: " + segment + ", src: " + arcUrlsDir );
+    
     final JobConf job = new JobConf(getConf(), this.getClass());
 
     job.set(Nutch.SEGMENT_NAME_KEY, segment.getName());
@@ -300,16 +301,19 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
     final OutputCollector output, final Reporter r)
     throws IOException
   {
+	  
+	LOG.info( "MAP WARC" );
     // Assumption is that this map is being run by ARCMapRunner.
     // Otherwise, the below casts fail.
     String url = key.toString();
-        
+    
+    
     WARCRecord rec = (WARCRecord)((ObjectWritable)value).get();
     WARCReporter reporter = (WARCReporter)r;       
 
     // Its null first time map is called on an ARC.
     checkWArcName(rec);   
-    if (! isIndex(rec))
+    if (!isIndex(rec))
     {
       return;
     }
@@ -348,9 +352,11 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 
     // Copy http headers to nutch metadata.
     final Metadata metaData = new Metadata();
-    //TODO review
     final HashMap<String,String> headersMap = (HashMap<String,String>) rec.getHeader().getHeaderFields();
+    LOG.info( "METADATA ->" );
+    
     for (Map.Entry<String, String> entry : headersMap.entrySet()) {
+    	
         String currentHeaderKey = entry.getKey();
         String currentHeaderValue = entry.getValue();
         if (mimetype == null)
@@ -369,6 +375,8 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
           }
         }        
         metaData.set(currentHeaderKey, currentHeaderValue);
+        LOG.info( "currentHeaderKey["+currentHeaderKey+"] currentHeaderValue["+currentHeaderValue+"]" );
+        System.out.println( "currentHeaderKey["+currentHeaderKey+"] currentHeaderValue["+currentHeaderValue+"]" );
     }
 
 
@@ -411,7 +419,9 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 
     // This is a nutch 'more' field.
     metaData.set("contentLength", recordLengthAsStr);
-
+    LOG.info( "contentLength["+recordLengthAsStr+"]" );
+    System.out.println( "contentLength["+recordLengthAsStr+"]" );
+    
     /*rec.skipHttpHeader();*/
     reporter.setStatusIfElapse("read headers on " + url);
 
@@ -588,34 +598,37 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
   }
 
  /**
-  * @param rec ARC Record to test.
+  * @param rec WARC Record to test.
   * @return True if we are to index this record.
   */
   protected boolean isIndex(final WARCRecord rec)
   {
+	LOG.info( "isIndex" );
     String recordType = (String) rec.getHeader().getHeaderValue("WARC-Type");
     if(!recordType.equals("response")){
       return false;
     }
     try{
-    byte [] statusBytes =  HttpParser.readRawLine(rec);  
-    int eolCharCount = getEolCharsCount(statusBytes);
-    if (eolCharCount <= 0) {
-      return false;
-    }
-    String statusLineStr = EncodingUtil.getString(statusBytes, 0, statusBytes.length - eolCharCount, WARCConstants.DEFAULT_ENCODING);
-    if ((statusLineStr == null) || !StatusLine.startsWithHTTP(statusLineStr)) {
-      return false;
-    }
-    StatusLine statusLine = new StatusLine(statusLineStr);
-    int status = statusLine.getStatusCode();
-
-    return ((status >= 200) && (status < 300))
-      || (this.indexRedirects && ((status >= 300) && (status < 400)));
+	    byte [] statusBytes =  HttpParser.readRawLine(rec);  
+	    int eolCharCount = getEolCharsCount(statusBytes);
+	    if (eolCharCount <= 0) {
+	      return false;
+	    }
+	    String statusLineStr = EncodingUtil.getString(statusBytes, 0, statusBytes.length - eolCharCount, WARCConstants.DEFAULT_ENCODING);
+	    if ((statusLineStr == null) || !StatusLine.startsWithHTTP(statusLineStr)) {
+	      return false;
+	    }
+	    StatusLine statusLine = new StatusLine(statusLineStr);
+	    int status = statusLine.getStatusCode();
+	    
+	    return ((status >= 200) && (status < 300))
+	      || (this.indexRedirects && ((status >= 300) && (status < 400)));
     } catch(HttpException e){
+      LOG.error( "Error parsing with command readRawLine do something?" );
       /*Error parsing with command readRawLine do something?*/
       return false;
     } catch (IOException e){
+      LOG.error( "error parsing statusline do something?" );
       /*error parsing statusline do something?*/
       return false;
     }

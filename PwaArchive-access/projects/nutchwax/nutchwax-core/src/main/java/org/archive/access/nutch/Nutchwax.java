@@ -196,14 +196,20 @@ public class Nutchwax
     final OutputDirectories od, String importType)
     throws IOException
   {
+	LOG.info( "doImport" );
     Path segment = new Path(od.getSegments(),
       Generator.generateSegmentName() +
         ((collectionName == null || collectionName.length() <= 0)?
           "": "-" + collectionName));
-    if( "warc".equals( importType ) )    
+    LOG.info( "importType = " + importType );
+    
+    if( "warc".equals( importType ) ){
+    	
     	new ImportWarcs(getJobConf()).importWarcs(input, segment, collectionName);
-    else
+    }
+    else {
     	new ImportArcs(getJobConf()).importArcs(input, segment, collectionName);
+    }
   }
     
   protected void doUpdate(final OutputDirectories od)
@@ -428,9 +434,12 @@ public class Nutchwax
       final Path input = new Path(args[1]);
       final Path output = new Path(args[2]);
       final String collectionName = args[3];
-      
-      checkArcsDir(input);
+      if( "importarc".equals( jobName ) )
+    	  checkArcsDir(input);
+      else if( "importwarc".equals( jobName ) )
+    	  checkWarcsDir(input);
       OutputDirectories od = new OutputDirectories(output);
+      LOG.info( "DoJob jobName["+jobName+"]" );
       if( "importwarc".equals( jobName ) )
     	  doImport(input, collectionName, od, "warc");
       else
@@ -648,6 +657,44 @@ public class Nutchwax
     }
   }
 
+  /**
+   * Check the warcs dir exists and looks like it has files that list WARCs
+   * (rather than WARCs themselves).
+   * 
+   * @param warcsDir Directory to examine.
+   * @throws IOException
+   */
+   protected void checkWarcsDir(final Path warcsDir)
+     throws IOException
+   {
+     if (! getFS().exists(warcsDir))
+     {
+       throw new IOException(warcsDir + " does not exist.");
+     }
+
+     if (! fs.isDirectory(warcsDir))
+     {
+       throw new IOException(warcsDir + " is not a directory.");
+     }
+
+     final Path [] files = getFS().listPaths(warcsDir);
+
+     for (int i = 0; i < files.length; i++)
+     {
+       if (! getFS().isFile(files[i]))
+       {
+         throw new IOException(files[i] + " is not a file.");
+       }
+
+       if (files[i].getName().toLowerCase().endsWith(".warc.gz"))
+       {
+         throw new IOException(files[i] + " is an ARC file (ARCSDIR " +
+           "should contain text file listing WARCs rather than " +
+           "actual WARCs).");
+       }
+     }
+   }
+  
   public static Text generateWaxKey(WritableComparable key,
     final String collection)
   {

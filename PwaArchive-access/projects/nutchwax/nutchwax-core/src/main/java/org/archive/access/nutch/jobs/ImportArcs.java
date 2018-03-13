@@ -294,6 +294,7 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     final OutputCollector output, final Reporter r)
     throws IOException
   {
+	  LOG.info( "MAP ARC" );
     // Assumption is that this map is being run by ARCMapRunner.
     // Otherwise, the below casts fail.
     String url = key.toString();
@@ -343,6 +344,7 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     // Copy http headers to nutch metadata.
     final Metadata metaData = new Metadata();
     final Header[] headers = rec.getHttpHeaders();
+    LOG.info( "ARC headers size = " + headers.length );
     for (int j = 0; j < headers.length; j++)
     {
       final Header header = headers[j];
@@ -365,6 +367,7 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
       }
       
       metaData.set(header.getName(), header.getValue());
+      LOG.info( "header Name["+header.getName()+"] Value["+header.getValue()+"]" );
     }
 
     // This call to reporter setStatus pings the tasktracker telling it our
