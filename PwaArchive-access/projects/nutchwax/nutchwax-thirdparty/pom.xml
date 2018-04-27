@@ -140,9 +140,20 @@
 	    <artifactId>commons-validator</artifactId>
 	    <version>1.4.0</version>
 	</dependency>
-	
-	
-	
+    <!--
+  <dependency>
+      <groupId>org.archive.wayback</groupId>
+      <artifactId>wayback-core</artifactId>
+      <version>1.2.1</version>
+  </dependency>
+      -->
+    <!--
+    <dependency>
+      <groupId>org.netpreserve.commons</groupId>
+      <artifactId>webarchive-commons</artifactId>
+      <version>1.1.8</version>
+    </dependency>
+
     <dependency>
       <groupId>org.archive</groupId>
       <artifactId>archive-commons</artifactId>
@@ -150,5 +161,26 @@
       <scope>system</scope>
       <systemPath>${project.basedir}/../nutchwax-plugins/src/plugin/index-wax/lib/archive-commons-1.12.0.jar</systemPath>
     </dependency>
+    -->
   </dependencies>
+    <!--
+    <repositories>
+        <repository>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+            <id>internetarchive</id>
+            <name>Internet Archive Maven Repository</name>
+            <url>http://builds.archive.org:8080/maven2</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+    -->
 </project>

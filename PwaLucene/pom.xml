@@ -49,8 +49,8 @@
 						<javac srcdir="${basedir}/src/main/java/"
     	         			destdir="${basedir}/src/main/java/"      	         
     	         			fork="true"    	        
-    	         			source="1.5"
-    	         			target="1.5"
+    	         			source="1.8"
+    	         			target="1.8"
     	         			debug="true">
     						<classpath>
     							<pathelement path = "${basedir}/src/main/java/" />
@@ -61,8 +61,8 @@
     					<javac srcdir="${basedir}/src/test/java/"
     	         			destdir="${basedir}/src/test/java/"      	         
     	         			fork="true"    	        
-    	         			source="1.5"
-    	         			target="1.5"
+    	         			source="1.8"
+    	         			target="1.8"
     	         			debug="true">
     						<classpath>
     							<pathelement path = "${basedir}/src/test/java/" />
