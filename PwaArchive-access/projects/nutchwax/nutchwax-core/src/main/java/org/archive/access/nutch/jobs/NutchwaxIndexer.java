@@ -106,9 +106,9 @@ public class NutchwaxIndexer extends Indexer
     job.setOutputValueClass(ObjectWritable.class);
 
     JobClient.runJob(job);
-    
+
     if (LOG.isInfoEnabled())
-    {
+    { 
       LOG.info("Indexer: done");
     }
   }

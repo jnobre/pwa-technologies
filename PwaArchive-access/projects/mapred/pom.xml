@@ -103,6 +103,7 @@
       <artifactId>commons-logging</artifactId>
       <version>1.0.4</version>
     </dependency>
+    <!--
     <dependency>
       <groupId>org.archive.heritrix</groupId>
       <artifactId>commons</artifactId>
@@ -110,6 +111,7 @@
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/commons-2.0.2.jar</systemPath>
     </dependency>
+  -->
     <dependency>
       <groupId>org.apache</groupId>
       <artifactId>hadoop</artifactId>

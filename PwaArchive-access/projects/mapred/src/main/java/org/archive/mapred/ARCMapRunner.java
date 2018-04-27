@@ -228,7 +228,7 @@ public class ARCMapRunner implements MapRunnable {
                     this.reporter.incrCounter(Counter.ARCRECORDS_COUNT, 1);
                     
                     
-                    try {
+                    try {                   	
                         ARCMapRunner.this.mapper.map(
                             new Text(rec.getMetaData().getUrl()),
                             new ObjectWritable(rec), this.output,

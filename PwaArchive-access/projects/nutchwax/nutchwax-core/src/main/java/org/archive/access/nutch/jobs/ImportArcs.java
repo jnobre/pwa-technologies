@@ -294,6 +294,7 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     final OutputCollector output, final Reporter r)
     throws IOException
   {
+	  LOG.info( "MAP ARC" );
     // Assumption is that this map is being run by ARCMapRunner.
     // Otherwise, the below casts fail.
     String url = key.toString();
@@ -343,6 +344,7 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     // Copy http headers to nutch metadata.
     final Metadata metaData = new Metadata();
     final Header[] headers = rec.getHttpHeaders();
+    LOG.info( "ARC headers size = " + headers.length );
     for (int j = 0; j < headers.length; j++)
     {
       final Header header = headers[j];
@@ -365,6 +367,7 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
       }
       
       metaData.set(header.getName(), header.getValue());
+      LOG.info( "header Name["+header.getName()+"] Value["+header.getValue()+"]" );
     }
 
     // This call to reporter setStatus pings the tasktracker telling it our
@@ -430,12 +433,12 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     reporter.setStatusIfElapse("closed " + url);
 
     final byte[] contentBytes = this.contentBuffer.toByteArray();
+    LOG.info("ARCContent: " + new String(contentBytes, "UTF-8"));
     final CrawlDatum datum = new CrawlDatum();
     datum.setStatus(CrawlDatum.STATUS_FETCH_SUCCESS);
 
     // Calculate digest or use precalculated sha1.
-    String digest = (this.sha1)? rec.getDigestStr():
-    MD5Hash.digest(contentBytes).toString();
+    String digest = (this.sha1)? rec.getDigestStr():MD5Hash.digest(contentBytes).toString();
     metaData.set(Nutch.SIGNATURE_KEY, digest);
     
     // Set digest back into the arcData so available later when we write
@@ -450,6 +453,10 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     final long startTime = System.currentTimeMillis();
     final Content content = new Content(url, url, contentBytes, mimetype,
       metaData, getConf());
+    LOG.info("ARC arcData date: " + arcData.getDate());
+    LOG.info("ARC Nutchwax.getDate date: " + Nutchwax.getDate(arcData.getDate()));
+
+
     datum.setFetchTime(Nutchwax.getDate(arcData.getDate()));
 
     MapWritable mw = datum.getMetaData();

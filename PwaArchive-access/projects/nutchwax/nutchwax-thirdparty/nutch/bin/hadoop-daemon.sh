@@ -1,5 +1,21 @@
-#!/bin/sh
-# 
+#!/usr/bin/env bash
+
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 # Runs a Hadoop command as a daemon.
 #
 # Environment Variables
@@ -38,18 +54,22 @@ hadoop_rotate_log ()
     if [ -n "$2" ]; then
 	num=$2
     fi
-    if [ -f "$log" ]; then # rotate logs
+    if [ -f "$_HADOOP_DAEMON_OUT" ]; then # rotate logs
 	while [ $num -gt 1 ]; do
 	    prev=`expr $num - 1`
-	    [ -f "$log.$prev" ] && mv "$log.$prev" "$log.$num"
+	    [ -f "$_HADOOP_DAEMON_OUT.$prev" ] && mv "$_HADOOP_DAEMON_OUT.$prev" "$_HADOOP_DAEMON_OUT.$num"
 	    num=$prev
 	done
-	mv "$log" "$log.$num";
+	mv "$_HADOOP_DAEMON_OUT" "$_HADOOP_DAEMON_OUT.$num";
     fi
 }
 
 if [ -f "${HADOOP_CONF_DIR}/hadoop-env.sh" ]; then
   . "${HADOOP_CONF_DIR}/hadoop-env.sh"
+fi
+
+if [ "$HADOOP_IDENT_STRING" = "" ]; then
+  export HADOOP_IDENT_STRING="$USER"
 fi
 
 # get log directory
@@ -62,15 +82,13 @@ if [ "$HADOOP_PID_DIR" = "" ]; then
   HADOOP_PID_DIR=/tmp
 fi
 
-if [ "$HADOOP_IDENT_STRING" = "" ]; then
-  export HADOOP_IDENT_STRING="$USER"
-fi
-
 # some variables
-export HADOOP_LOGFILE=hadoop-$HADOOP_IDENT_STRING-$command-`hostname`.log
+export HADOOP_LOGFILE=hadoop-$HADOOP_IDENT_STRING-$command-$HOSTNAME.log
 export HADOOP_ROOT_LOGGER="INFO,DRFA"
-log=$HADOOP_LOG_DIR/hadoop-$HADOOP_IDENT_STRING-$command-`hostname`.out
-pid=$HADOOP_PID_DIR/hadoop-$HADOOP_IDENT_STRING-$command.pid
+export HADOOP_SECURITY_LOGGER="INFO,DRFAS"
+export _HADOOP_DAEMON_OUT=$HADOOP_LOG_DIR/hadoop-$HADOOP_IDENT_STRING-$command-$HOSTNAME.out
+export _HADOOP_DAEMON_PIDFILE=$HADOOP_PID_DIR/hadoop-$HADOOP_IDENT_STRING-$command.pid
+export _HADOOP_DAEMON_DETACHED="true"
 
 # Set default scheduling priority
 if [ "$HADOOP_NICENESS" = "" ]; then
@@ -81,31 +99,33 @@ case $startStop in
 
   (start)
 
-    if [ -f $pid ]; then
-      if kill -0 `cat $pid` > /dev/null 2>&1; then
-        echo $command running as process `cat $pid`.  Stop it first.
+    mkdir -p "$HADOOP_PID_DIR"
+
+    if [ -f $_HADOOP_DAEMON_PIDFILE ]; then
+      if kill -0 `cat $_HADOOP_DAEMON_PIDFILE` > /dev/null 2>&1; then
+        echo $command running as process `cat $_HADOOP_DAEMON_PIDFILE`.  Stop it first.
         exit 1
       fi
     fi
 
     if [ "$HADOOP_MASTER" != "" ]; then
       echo rsync from $HADOOP_MASTER
-      rsync -a -e ssh --delete --exclude=.svn $HADOOP_MASTER/ "$HADOOP_HOME"
+      rsync -a -e ssh --delete --exclude=.svn --exclude='logs/*' --exclude='contrib/hod/logs/*' $HADOOP_MASTER/ "$HADOOP_HOME"
     fi
 
-    hadoop_rotate_log $log
-    echo starting $command, logging to $log
-    nohup nice -n $HADOOP_NICENESS "$HADOOP_HOME"/bin/hadoop --config $HADOOP_CONF_DIR $command "$@" > "$log" 2>&1 < /dev/null &
-    echo $! > $pid
-    sleep 1; head "$log"
+    hadoop_rotate_log $_HADOOP_DAEMON_OUT
+    echo starting $command, logging to $_HADOOP_DAEMON_OUT
+    cd "$HADOOP_HOME"
+
+    nice -n $HADOOP_NICENESS "$HADOOP_HOME"/bin/hadoop --config $HADOOP_CONF_DIR $command "$@" < /dev/null
     ;;
           
   (stop)
 
-    if [ -f $pid ]; then
-      if kill -0 `cat $pid` > /dev/null 2>&1; then
+    if [ -f $_HADOOP_DAEMON_PIDFILE ]; then
+      if kill -0 `cat $_HADOOP_DAEMON_PIDFILE` > /dev/null 2>&1; then
         echo stopping $command
-        kill `cat $pid`
+        kill `cat $_HADOOP_DAEMON_PIDFILE`
       else
         echo no $command to stop
       fi

@@ -45,6 +45,7 @@ import org.apache.nutch.crawl.Generator;
 import org.apache.nutch.indexer.DeleteDuplicates;
 import org.apache.nutch.indexer.IndexMerger;
 import org.archive.access.nutch.jobs.ImportArcs;
+import org.archive.access.nutch.jobs.ImportWarcs;
 import org.archive.access.nutch.jobs.NutchwaxCrawlDb;
 import org.archive.access.nutch.jobs.NutchwaxIndexer;
 import org.archive.access.nutch.jobs.NutchwaxLinkDb;
@@ -68,9 +69,9 @@ public class Nutchwax
     Pattern.compile("^\\s*c=([^,]+),u=(.*)\\s*", Pattern.DOTALL);
 
   private final static List JOBS = Arrays.asList(new String[] {
-    "import", "update", "invert", "pagerank", "index", "dedup", "merge", "all",
+    "importarc", "importwarc", "update", "invert", "pagerank", "index", "dedup", "merge", "all",
     "class", "search", "multiple","version"});
-    
+  
 
   // Lazy initialize these two variables to delay complaint about hadoop not
   // being present -- if its not.  Meantime I get command-line processing
@@ -177,10 +178,10 @@ public class Nutchwax
    * @throws Exception
    */
   protected void doAll(final Path input, final String collectionName,
-    final OutputDirectories od)
+    final OutputDirectories od, final String importType)
     throws IOException
   {
-    doImport(input, collectionName, od);
+    doImport(input, collectionName, od, importType);
     doUpdate(od);
     doInvert(od);
     doPagerank(od); 
@@ -192,15 +193,23 @@ public class Nutchwax
   }
     
   protected void doImport(final Path input, String collectionName,
-    final OutputDirectories od)
+    final OutputDirectories od, String importType)
     throws IOException
   {
+	LOG.info( "doImport" );
     Path segment = new Path(od.getSegments(),
       Generator.generateSegmentName() +
         ((collectionName == null || collectionName.length() <= 0)?
           "": "-" + collectionName));
-        
-    new ImportArcs(getJobConf()).importArcs(input, segment, collectionName);
+    LOG.info( "importType = " + importType );
+    
+    if( "warc".equals( importType ) ){
+    	
+    	new ImportWarcs(getJobConf()).importWarcs(input, segment, collectionName);
+    }
+    else {
+    	new ImportArcs(getJobConf()).importArcs(input, segment, collectionName);
+    }
   }
     
   protected void doUpdate(final OutputDirectories od)
@@ -413,7 +422,7 @@ public class Nutchwax
   protected void doJob(final String jobName, final String [] args)
     throws Exception
   {
-    if ( "import".equals( jobName ) )
+    if ( "importarc".equals( jobName ) || "importwarc".equals( jobName ) )
     {
       // Usage: hadoop jar nutchwax.jar import input output name
       if (args.length != 4)
@@ -425,10 +434,16 @@ public class Nutchwax
       final Path input = new Path(args[1]);
       final Path output = new Path(args[2]);
       final String collectionName = args[3];
-
-      checkArcsDir(input);
+      if( "importarc".equals( jobName ) )
+    	  checkArcsDir(input);
+      else if( "importwarc".equals( jobName ) )
+    	  checkWarcsDir(input);
       OutputDirectories od = new OutputDirectories(output);
-      doImport(input, collectionName, od);
+      LOG.info( "DoJob jobName["+jobName+"]" );
+      if( "importwarc".equals( jobName ) )
+    	  doImport(input, collectionName, od, "warc");
+      else
+    	  doImport(input, collectionName, od, "arc");
     }
     else if ( "update".equals( jobName ) )
     {
@@ -563,12 +578,13 @@ public class Nutchwax
       final Path input = new Path(args[1]);
       final Path output = new Path(args[2]);
       final String collectionName = args[3];
-
+      final String importType = args[4];
+      
       checkArcsDir(input);
 
       OutputDirectories od = new OutputDirectories(output);
 
-      doAll(input, collectionName, od);
+      doAll(input, collectionName, od, importType);
     }
     else if ( "class".equals( jobName ) )
     {
@@ -641,6 +657,44 @@ public class Nutchwax
     }
   }
 
+  /**
+   * Check the warcs dir exists and looks like it has files that list WARCs
+   * (rather than WARCs themselves).
+   * 
+   * @param warcsDir Directory to examine.
+   * @throws IOException
+   */
+   protected void checkWarcsDir(final Path warcsDir)
+     throws IOException
+   {
+     if (! getFS().exists(warcsDir))
+     {
+       throw new IOException(warcsDir + " does not exist.");
+     }
+
+     if (! fs.isDirectory(warcsDir))
+     {
+       throw new IOException(warcsDir + " is not a directory.");
+     }
+
+     final Path [] files = getFS().listPaths(warcsDir);
+
+     for (int i = 0; i < files.length; i++)
+     {
+       if (! getFS().isFile(files[i]))
+       {
+         throw new IOException(files[i] + " is not a file.");
+       }
+
+       if (files[i].getName().toLowerCase().endsWith(".warc.gz"))
+       {
+         throw new IOException(files[i] + " is an ARC file (ARCSDIR " +
+           "should contain text file listing WARCs rather than " +
+           "actual WARCs).");
+       }
+     }
+   }
+  
   public static Text generateWaxKey(WritableComparable key,
     final String collection)
   {
@@ -732,7 +786,8 @@ public class Nutchwax
     System.out.println("Jobs (usually) must be run in the order " +
       "listed below.");
     System.out.println("Available jobs:");
-    System.out.println(" import   Import ARCs.");
+    System.out.println(" importwarc   Import WARCs.");
+    System.out.println(" importarc   Import ARCs.");
     System.out.println(" update   Update dbs with recent imports.");
     System.out.println(" invert   Invert links.");
     System.out.println(" pagerank Compute pagerank.");  // TODO MC
@@ -948,9 +1003,13 @@ public class Nutchwax
       usage("ERROR: Unknown job " + jobName, 1);
     }
 
-    if ( "import".equals( jobName ) )
+    if ( "importarc".equals( jobName ) )
     {
       ImportArcs.doImportUsage(null, 1);
+    }
+    else if ( "importwarc".equals( jobName ) )
+    {
+      ImportWarcs.doImportUsage(null, 1);
     }
     else if ( "update".equals( jobName ) )
     {
