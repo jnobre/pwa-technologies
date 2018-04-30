@@ -425,7 +425,7 @@
                   <plugin>
                       <groupId>org.fusesource.mvnplugins</groupId>
                       <artifactId>maven-graph-plugin</artifactId>
-                      <version>1.4</version>
+                      <version>1.39</version>
                   </plugin>
               </plugins>
           </build>
