@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
@@ -71,13 +74,20 @@ import org.apache.nutch.parse.ParseOutputFormat;
 import org.apache.nutch.parse.ParseStatus;
 import org.apache.nutch.parse.ParseText;
 import org.apache.nutch.parse.ParseUtil;
-import org.apache.nutch.protocol.Content;
 import org.apache.nutch.scoring.ScoringFilterException;
 import org.apache.nutch.scoring.ScoringFilters;
 import org.apache.nutch.util.StringUtil;
 import org.apache.nutch.util.mime.MimeType;
 import org.apache.nutch.util.mime.MimeTypeException;
 import org.apache.nutch.util.mime.MimeTypes;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.sax.Link;
+import org.apache.tika.sax.LinkContentHandler;
 import org.archive.access.nutch.Nutchwax;
 import org.archive.access.nutch.NutchwaxConfiguration;
 import org.archive.access.nutch.jobs.sql.SqlSearcher;
@@ -89,6 +99,7 @@ import org.archive.mapred.ARCReporter;
 import org.archive.util.Base32;
 import org.archive.util.MimetypeUtils;
 import org.archive.util.TextUtils;
+import org.xml.sax.ContentHandler;
 import org.apache.nutch.global.Global;
 
 
@@ -290,6 +301,50 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
 	threadPool.closeAll(); // close the only thread created for this map
   }   
 
+	/*This function returns a string array where the first position contains the parsed text and the second contains the title of the document*/
+	public static String[] parseUsingAutoDetect(byte[] content, TikaConfig tikaConfig,
+			org.apache.tika.metadata.Metadata metadata) throws Exception {
+		AutoDetectParser parser = new AutoDetectParser(tikaConfig);
+		ContentHandler handler = new BodyContentHandler();
+		TikaInputStream stream = TikaInputStream.get(content, metadata);
+		parser.parse(stream, handler, metadata, new ParseContext());
+		String title = metadata.get("title");
+		String [] result = new String[2];
+		if(title != null){ /*For historical reasons adding title to the text extracted*/
+			result[0] = title;
+		}
+		result[0] += handler.toString();
+		result[1] = title;
+		return result;
+	}
+	
+	/*Use apache tika to extract outlinks and convert them to Nutch Outlink format*/
+    public  Outlink[] parseLinks(byte[] content, TikaConfig tikaConfig,
+    		org.apache.tika.metadata.Metadata metadata) throws Exception {
+    		List<Outlink> outlinksList = new ArrayList<Outlink>();
+    		HtmlParser parser = new HtmlParser();
+    		LinkContentHandler handler = new LinkContentHandler();
+    		TikaInputStream stream = TikaInputStream.get(content, metadata);
+    		parser.parse(stream, handler, metadata, new ParseContext());
+    		List<Link> links = handler.getLinks();
+    		Iterator<Link> iter = links.iterator();
+			while(iter.hasNext()) {
+				Link link = iter.next();
+				Outlink outlink = null;
+				try{
+					outlink = new Outlink(link.getUri(),link.getText() , conf);
+					outlinksList.add(outlink );
+					LOG.info("OUTLINK_URI" +link.getUri()); 
+					LOG.info("OUTLINK_TEXT:" + link.getText());					
+				} catch(MalformedURLException e){ /*Nutch interface only accepts valid uris*/
+					continue;
+				}
+			}
+			/*convert list to array and return it*/
+			return outlinksList.toArray(new Outlink[outlinksList.size()]);  	
+    }    	
+	
+  
   public void map(final WritableComparable key, final Writable value,
     final OutputCollector output, final Reporter r)
     throws IOException
@@ -343,11 +398,13 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
 
     // Copy http headers to nutch metadata.
     final Metadata metaData = new Metadata();
+    org.apache.tika.metadata.Metadata tikaMetadata = new org.apache.tika.metadata.Metadata();
     final Header[] headers = rec.getHttpHeaders();
     LOG.info( "ARC headers size = " + headers.length );
     for (int j = 0; j < headers.length; j++)
     {
       final Header header = headers[j];
+      tikaMetadata.add(header.getName(), header.getValue());
       
       if (mimetype == null)
       {
@@ -451,11 +508,29 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     metaData.set(Nutch.SCORE_KEY, Float.toString(datum.getScore()));
 
     final long startTime = System.currentTimeMillis();
-    final Content content = new Content(url, url, contentBytes, mimetype,
-      metaData, getConf());
+
     LOG.info("ARC arcData date: " + arcData.getDate());
     LOG.info("ARC Nutchwax.getDate date: " + Nutchwax.getDate(arcData.getDate()));
 
+	String [] apacheExtractedContent = new String[2];
+	Outlink[] outlinksTika = null;
+	try{
+		TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
+		apacheExtractedContent = parseUsingAutoDetect(contentBytes, tikaConfig,
+				tikaMetadata);
+		LOG.info("Parsing Links");
+		outlinksTika = parseLinks(contentBytes,  tikaConfig, tikaMetadata);
+		LOG.info("End Parsing Links");
+
+	} catch (IOException io){
+		LOG.info("Error parsing tika: " + io);
+		LOG.error("Error parsing tika: ", io);
+	} catch (Exception e){
+		LOG.info("Error parsing tika: " + e);
+		LOG.error("Error parsing tika: ", e);     
+	}
+    
+    
 
     datum.setFetchTime(Nutchwax.getDate(arcData.getDate()));
 
@@ -477,40 +552,11 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
       new Text(Long.toString(arcData.getOffset())));
     datum.setMetaData(mw);
           
-	TimeoutParsingThread tout=threadPool.getThread(Thread.currentThread().getId(),timeoutIndexingDocument);	
-	tout.setUrl(url);
-    tout.setContent(content);
-    tout.setParseUtil(parseUtil);          
-    tout.wakeupAndWait();        
-	
-	ParseStatus parseStatus=tout.getParseStatus();
-	Parse parse=tout.getParse();		 
+	ParseImpl tikaParseImpl = new ParseImpl(apacheExtractedContent[0], new ParseData(new ParseStatus(1),apacheExtractedContent[1],outlinksTika,metaData));
 	reporter.setStatusIfElapse("parsed " + url);
-	   
-	if (!parseStatus.isSuccess()) {
-      final String status = formatToOneLine(parseStatus.toString());
-      LOG.warn("Error parsing: " + mimetype + " " + url + ": " + status);
-      parse = null;
-    }
-    else {
-      // Was it a slow parse?
-      final double kbPerSecond = getParseRate(startTime,
-        (contentBytes != null) ? contentBytes.length : 0);
-      
-      if (LOG.isDebugEnabled())
-      {
-        LOG.debug(getParseRateLogMessage(url,
-          noSpacesMimetype, kbPerSecond));
-      }
-      else if (kbPerSecond < this.parseThreshold)
-      {
-        LOG.warn(getParseRateLogMessage(url, noSpacesMimetype,
-          kbPerSecond));
-      }
-    }
 
-    Writable v = new FetcherOutput(datum, null,
-      parse != null ? new ParseImpl(parse) : null);       
+
+    Writable v = new FetcherOutput(datum, null, tikaParseImpl);       
     if (collectionType.equals(Global.COLLECTION_TYPE_MULTIPLE)) {
     	LOG.info("multiple: "+SqlSearcher.getCollectionNameWithTimestamp(this.collectionName,arcData.getDate())+" "+url); 
     	output.collect(Nutchwax.generateWaxKey(url,SqlSearcher.getCollectionNameWithTimestamp(this.collectionName,arcData.getDate())), v); 

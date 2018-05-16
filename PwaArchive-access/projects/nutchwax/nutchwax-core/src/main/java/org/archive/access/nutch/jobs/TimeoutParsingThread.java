@@ -181,8 +181,7 @@ public class TimeoutParsingThread extends Thread {
 	/**
 	 * Set parse content
 	 */	
-	public void setContent(Content content) {
-		LOG.info("Content arriving:\n "+ content.toString() + "--------\n");
+	public void setContent(Content content) {		
 		this.content=content;	
 	}
 	

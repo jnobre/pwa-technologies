@@ -290,6 +290,7 @@ public class IndexSorterArquivoWeb extends ToolBase {
 	String value = NutchConfiguration.create().get(INCLUDE_EXTENSIONS_KEY, "");
 	String includeExtensions[] = includes.split(value);
 	Hashtable<String,Boolean> validExtensions=new Hashtable<String,Boolean>();
+	String subType;
 	for (int i = 0; i < includeExtensions.length; i++) {
 		validExtensions.put(includeExtensions[i], true);	
 		System.out.println("extension boosted "+includeExtensions[i]);
@@ -305,8 +306,13 @@ public class IndexSorterArquivoWeb extends ToolBase {
       else {    	 
         //score = Similarity.decodeNorm(boosts[oldDoc]); TODO MC
     	/* TODO MC */
-    	docMeta=searcher.doc(oldDoc);	
-    	if (validExtensions.get(docMeta.get("subType"))==null) { // searched extensions will have higher scores 
+    	docMeta=searcher.doc(oldDoc);
+    	subType = docMeta.get("subType");
+    	if(subType == null){ /* TODO move this to the logs*/
+    		System.out.println("no subtype for document?");
+    		System.out.println(docMeta.toString());
+    	}
+    	if ( subType==null || validExtensions.get(docMeta.get("subType"))==null) { // searched extensions will have higher scores 
     		score=-0.5f;
     	}
     	else {
