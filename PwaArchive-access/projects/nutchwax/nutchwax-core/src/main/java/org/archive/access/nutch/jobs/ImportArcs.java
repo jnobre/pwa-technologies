@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -101,6 +102,7 @@ import org.archive.util.MimetypeUtils;
 import org.archive.util.TextUtils;
 import org.xml.sax.ContentHandler;
 import org.apache.nutch.global.Global;
+
 
 
 /**
@@ -350,6 +352,17 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     throws IOException
   {
 	  LOG.info( "MAP ARC" );
+
+      ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+      URL[] urls = ((URLClassLoader)cl).getURLs();
+      LOG.info("Printing ClassPath\n");
+      LOG.info("--------------------------------------------\n");
+      for(URL url: urls){
+      	LOG.info(url.getFile());
+      }            	
+      LOG.info("--------------------------------------------\n");	  
+	  
     // Assumption is that this map is being run by ARCMapRunner.
     // Otherwise, the below casts fail.
     String url = key.toString();

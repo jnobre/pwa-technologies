@@ -41,6 +41,8 @@ import org.archive.io.ArchiveReader;
 import org.archive.io.ArchiveReaderFactory;
 import org.archive.io.arc.ARCConstants;
 import org.archive.io.arc.ARCRecord;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * MapRunner that passes an ARCRecord to configured mapper.
@@ -218,16 +220,25 @@ public class ARCMapRunner implements MapRunnable {
             }
 
             try {
+                ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+                URL[] urls = ((URLClassLoader)cl).getURLs();
+                LOG.info("Printing ClassPath\n");
+                LOG.info("--------------------------------------------\n");
+                for(URL url: urls){
+                	LOG.info(url.getFile());
+                }            	
+                LOG.info("--------------------------------------------\n");
                 ARCMapRunner.this.mapper.onARCOpen();
                 this.reporter.incrCounter(Counter.ARCS_COUNT, 1);              
-                
+                int arcnumber = 1;
                 // Iterate over each ARCRecord.
-                for (final Iterator i = arc.iterator();
-                        i.hasNext() && !currentThread().isInterrupted();) {
+                final Iterator i = arc.iterator();
+                while (i.hasNext()){
                     final ARCRecord rec = (ARCRecord)i.next();
                     this.reporter.incrCounter(Counter.ARCRECORDS_COUNT, 1);
-                    
-                    
+                    arcnumber++;
+ /*                   
                     try {                   	
                         ARCMapRunner.this.mapper.map(
                             new Text(rec.getMetaData().getUrl()),
@@ -257,8 +268,9 @@ public class ARCMapRunner implements MapRunnable {
                     } catch (final Exception e) {
                         // Failed parse of record. Keep going.
                         LOG.warn("Error processing " + rec.getMetaData(), e);
-                    }
+                    }*/
                 }
+                System.out.println("ARC Records: " + arcnumber);
                 if (currentThread().isInterrupted()) {
                     LOG.info(currentThread().getName() + " interrupted");
                 }                
