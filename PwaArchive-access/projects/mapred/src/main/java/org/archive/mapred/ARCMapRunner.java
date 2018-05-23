@@ -238,7 +238,7 @@ public class ARCMapRunner implements MapRunnable {
                     final ARCRecord rec = (ARCRecord)i.next();
                     this.reporter.incrCounter(Counter.ARCRECORDS_COUNT, 1);
                     arcnumber++;
- /*                   
+
                     try {                   	
                         ARCMapRunner.this.mapper.map(
                             new Text(rec.getMetaData().getUrl()),
@@ -268,7 +268,7 @@ public class ARCMapRunner implements MapRunnable {
                     } catch (final Exception e) {
                         // Failed parse of record. Keep going.
                         LOG.warn("Error processing " + rec.getMetaData(), e);
-                    }*/
+                    }
                 }
                 System.out.println("ARC Records: " + arcnumber);
                 if (currentThread().isInterrupted()) {
