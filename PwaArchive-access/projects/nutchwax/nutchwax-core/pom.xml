@@ -131,10 +131,10 @@
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
-
+            <!--
           <compilerArgument> -verbose -cp ../nutchwax-thirdparty/nutch/build/classes</compilerArgument>
           <compilerArgument> -verbose -classpath ../nutchwax-thirdparty/nutch/build/classes</compilerArgument>
-
+            -->
         </configuration>
       </plugin>
     </plugins>
