@@ -899,15 +899,15 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 	public static String[] parseUsingAutoDetect(byte[] content, TikaConfig tikaConfig,
 			org.apache.tika.metadata.Metadata metadata) throws Exception {
 		AutoDetectParser parser = new AutoDetectParser(tikaConfig);
-		ContentHandler handler = new BodyContentHandler();
+		ContentHandler handler = new BodyContentHandler(-1); /*No maximum read limit of characters default is 10 000*/
 		TikaInputStream stream = TikaInputStream.get(content, metadata);
 		parser.parse(stream, handler, metadata, new ParseContext());
 		String title = metadata.get("title");
 		String [] result = new String[2];
 		if(title != null){ /*For historical reasons adding title to the text extracted*/
-			result[0] = title;
+			result[0] = title + " ";
 		}
-		result[0] += handler.toString();
+		result[0] +=handler.toString();
 		result[1] = title;
 		return result;
 	}
@@ -928,8 +928,8 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 				try{
 					outlink = new Outlink(link.getUri(),link.getText() , conf);
 					outlinksList.add(outlink );
-					LOG.info("OUTLINK_URI" +link.getUri()); 
-					LOG.info("OUTLINK_TEXT:" + link.getText());					
+					//LOG.info("OUTLINK_URI" +link.getUri()); 
+					//LOG.info("OUTLINK_TEXT:" + link.getText());					
 				} catch(MalformedURLException e){ /*Nutch interface only accepts valid uris*/
 					continue;
 				}
@@ -1056,24 +1056,24 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 				/ ((double) elapsedTime / 1000) : 0;
 	}
 
-	protected boolean skip(final String mimetype)
-	{
-		boolean decision = false;
-
-		// Are we to index all content?
-		if (!this.indexAll)
-		{
-			if ((mimetype == null)
-					|| (!mimetype.startsWith(ImportWarcs.TEXT_TYPE) && !mimetype
-							.startsWith(ImportWarcs.APPLICATION_TYPE))
-					|| (mimetype.startsWith(ImportWarcs.TEXT_TYPE) && mimetype.toLowerCase().contains("css"))) 
-			{
-				// Skip any but basic types.
-				decision = true;
-			}
-		}
-		return decision;
-	}
+	  protected boolean skip(final String mimetype)
+	  {
+	    boolean decision = false;
+	    
+	    /*We Are only indexing text* and application* mimetypes  */
+	    /*We are also excluding CSS, javascript and XML */
+	    
+	      if ((mimetype == null)
+	        || (!mimetype.startsWith(ImportWarcs.TEXT_TYPE) && !mimetype.startsWith(ImportWarcs.APPLICATION_TYPE))
+	        || (mimetype.startsWith(ImportWarcs.TEXT_TYPE) && mimetype.toLowerCase().contains("css"))
+	    	|| (mimetype.toLowerCase().contains("xml"))
+	    	|| (mimetype.toLowerCase().contains("javascript")))  
+	      {
+	        // Skip any but basic types.
+	        decision = true;
+	      }   
+	    return decision;
+	  }
 
 	protected String getMimetype(final String mimetype, final MimeTypes mts,
 			final String url)

@@ -307,13 +307,13 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
 	public static String[] parseUsingAutoDetect(byte[] content, TikaConfig tikaConfig,
 			org.apache.tika.metadata.Metadata metadata) throws Exception {
 		AutoDetectParser parser = new AutoDetectParser(tikaConfig);
-		ContentHandler handler = new BodyContentHandler();
+		ContentHandler handler = new BodyContentHandler(-1); /*No maximum read limit of characters default is 10 000*/
 		TikaInputStream stream = TikaInputStream.get(content, metadata);
 		parser.parse(stream, handler, metadata, new ParseContext());
 		String title = metadata.get("title");
 		String [] result = new String[2];
 		if(title != null){ /*For historical reasons adding title to the text extracted*/
-			result[0] = title;
+			result[0] = title+ " ";
 		}
 		result[0] += handler.toString();
 		result[1] = title;
@@ -335,9 +335,7 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
 				Outlink outlink = null;
 				try{
 					outlink = new Outlink(link.getUri(),link.getText() , conf);
-					outlinksList.add(outlink );
-					LOG.info("OUTLINK_URI" +link.getUri()); 
-					LOG.info("OUTLINK_TEXT:" + link.getText());					
+					outlinksList.add(outlink );					
 				} catch(MalformedURLException e){ /*Nutch interface only accepts valid uris*/
 					continue;
 				}
@@ -352,16 +350,6 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
     throws IOException
   {
 	  LOG.info( "MAP ARC" );
-
-      ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-      URL[] urls = ((URLClassLoader)cl).getURLs();
-      LOG.info("Printing ClassPath\n");
-      LOG.info("--------------------------------------------\n");
-      for(URL url: urls){
-      	LOG.info(url.getFile());
-      }            	
-      LOG.info("--------------------------------------------\n");	  
 	  
     // Assumption is that this map is being run by ARCMapRunner.
     // Otherwise, the below casts fail.
@@ -675,17 +663,22 @@ public class ImportArcs extends ToolBase implements ARCRecordMapper
   {
     boolean decision = false;
     
+    /*We Are only indexing text* and application* mimetypes  */
+    /*We are also excluding CSS, javascript and XML */
+    
     // Are we to index all content?
-    if (!this.indexAll)
-    {
+    //if (!this.indexAll)
+    //{
       if ((mimetype == null)
-        || (!mimetype.startsWith(ImportArcs.TEXT_TYPE) && !mimetype
-        .startsWith(ImportArcs.APPLICATION_TYPE)))
+        || (!mimetype.startsWith(ImportArcs.TEXT_TYPE) && !mimetype.startsWith(ImportArcs.APPLICATION_TYPE))
+        || (mimetype.startsWith(ImportArcs.TEXT_TYPE) && mimetype.toLowerCase().contains("css"))
+    	|| (mimetype.toLowerCase().contains("xml"))
+    	|| (mimetype.toLowerCase().contains("javascript")))  
       {
         // Skip any but basic types.
         decision = true;
       }
-    }
+    //}
     
     return decision;
   }
