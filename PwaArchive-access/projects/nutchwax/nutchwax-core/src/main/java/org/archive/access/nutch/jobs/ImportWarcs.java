@@ -559,6 +559,11 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 		/*Content content = new Content(url, url, contentBytesNoHeaders, mimetype,
 				metaData, getConf());*/
 
+	    LOG.info("WARC arcData date: " + warcData.getDate());
+	    LOG.info("WARC TS date: " + getTs(warcData.getDate()));
+	    LOG.info("WARC Nutchwax.getDate date: " + Nutchwax.getDate(getTs(warcData.getDate())));
+	    
+		
 		String [] apacheExtractedContent = new String[2];
 		Outlink[] outlinksTika = null;
 		try{
@@ -567,7 +572,7 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 					tikaMetadata);
 			LOG.info("Parsing Links");
 			outlinksTika = parseLinks(contentBytesNoHeaders,  tikaConfig, tikaMetadata);
-			LOG.info("End Parsing Links");
+			LOG.info("End Parsing Links - "+ outlinksTika.length + " links found" );
 
 		} catch (IOException io){
 			LOG.info("Error parsing tika: " + io);
@@ -698,9 +703,10 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 		String hour = "";
 		String minute = "";
 		String second = "";
-
+		LOG.info("WARC getTs - received: " + dateWarc);
 		try{
 			SimpleDateFormat thedate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", new Locale("pt", "PT"));
+			thedate.parse(dateWarc);
 			Calendar mydate = thedate.getCalendar();
 
 			year +=  mydate.get(Calendar.YEAR);
@@ -928,8 +934,8 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 				try{
 					outlink = new Outlink(link.getUri(),link.getText() , conf);
 					outlinksList.add(outlink );
-					//LOG.info("OUTLINK_URI" +link.getUri()); 
-					//LOG.info("OUTLINK_TEXT:" + link.getText());					
+					LOG.info("OUTLINK_URI" +link.getUri()); 
+					LOG.info("OUTLINK_TEXT:" + link.getText());					
 				} catch(MalformedURLException e){ /*Nutch interface only accepts valid uris*/
 					continue;
 				}
@@ -1315,6 +1321,7 @@ public class ImportWarcs extends ToolBase implements WARCRecordMapper
 					}
 
 					// collect outlinks for subsequent db update
+					LOG.info("normalizing outlinks");
 					Outlink[] links = parseData.getOutlinks();
 					if (ignoreExternalLinks)
 					{
